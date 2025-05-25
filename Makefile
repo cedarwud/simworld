@@ -5,17 +5,17 @@ up: down
 
 down:
 	docker compose down
-	docker system prune -f
+	docker network prune -f
 
 down-v:
 	docker compose down -v
 	docker volume prune -f
-	docker system prune -f
+	docker network prune -f
 
 clean:
 	docker compose down --rmi all --volumes --remove-orphans
 	docker volume prune -f
-	docker system prune -af
+	docker network prune -f
 
 build:
 	docker compose build --no-cache

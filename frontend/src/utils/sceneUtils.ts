@@ -6,12 +6,16 @@
 export const SCENE_MAPPING = {
     nycu: 'NYCU',
     lotus: 'Lotus',
+    ntpu: 'NTPU',
+    nanliao: 'Nanliao',
 } as const
 
 // 場景顯示名稱映射
 export const SCENE_DISPLAY_NAMES = {
     nycu: '陽明交通大學',
     lotus: '荷花池',
+    ntpu: '臺北大學',
+    nanliao: '南寮漁港',
 } as const
 
 // 場景座標轉換參數映射
@@ -24,6 +28,16 @@ export const SCENE_COORDINATE_TRANSFORMS = {
     lotus: {
         offsetX: 1200,
         offsetY: 900,
+        scale: 1.0,
+    },
+    ntpu: {
+        offsetX: 900,
+        offsetY: 620,
+        scale: 1.0,
+    },
+    nanliao: {
+        offsetX: 920,
+        offsetY: 600,
         scale: 1.0,
     },
 } as const
@@ -62,6 +76,10 @@ export function getSceneTextureName(sceneParam: string): string {
             return 'EXPORT_GOOGLE_SAT_WM.png'
         case 'Lotus':
             return 'EXPORT_GOOGLE_SAT_WM.png'  // 假設 Lotus 也使用相同的紋理檔案
+        case 'NTPU':
+            return 'EXPORT_GOOGLE_SAT_WM.png'  // 臺北大學使用相同的紋理檔案
+        case 'Nanliao':
+            return 'EXPORT_GOOGLE_SAT_WM.png'  // 南寮漁港使用相同的紋理檔案
         default:
             return 'EXPORT_GOOGLE_SAT_WM.png'
     }

@@ -57,35 +57,94 @@ SCENE_BACKGROUND_COLOR_RGB = [0.5, 0.5, 0.5]
 # --- End Constant ---
 
 
+# --- 輔助函數：XML 健康度檢查 ---
+def check_scene_health(scene_name: str, xml_path: str) -> bool:
+    """
+    檢查場景的健康度，包括 XML 格式和幾何數據完整性
+    返回 True 表示健康，False 表示需要回退
+    """
+    try:
+        # 檢查 1: XML 文件是否存在
+        if not os.path.exists(xml_path):
+            logger.warning(f"場景 {scene_name} 的 XML 文件不存在: {xml_path}")
+            return False
+
+        # 檢查 2: XML 格式問題 - NTPU 和 Nanliao 有已知的 shape id 問題
+        if scene_name in ["NTPU", "Nanliao"]:
+            logger.warning(
+                f"⚠️  注意：{scene_name} 場景的 XML 文件格式不相容於 Sionna"
+                f"（shape 元素缺少 id 屬性），自動回退到 NYCU 場景。"
+            )
+            return False
+
+        # 檢查 3: 幾何數據完整性 - 檢查 PLY 文件大小
+        if scene_name == "Lotus":
+            scene_dir = os.path.dirname(xml_path)
+            meshes_dir = os.path.join(scene_dir, "meshes")
+
+            if os.path.exists(meshes_dir):
+                ply_files = [f for f in os.listdir(meshes_dir) if f.endswith(".ply")]
+                total_size = 0
+                small_files = 0
+
+                for ply_file in ply_files:
+                    ply_path = os.path.join(meshes_dir, ply_file)
+                    if os.path.exists(ply_path):
+                        size = os.path.getsize(ply_path)
+                        total_size += size
+                        if size < 2000:  # 小於 2KB 的文件視為不完整
+                            small_files += 1
+
+                # 如果總大小太小或太多小文件，視為不健康
+                if total_size < 30000 or small_files > len(ply_files) * 0.8:
+                    logger.warning(
+                        f"⚠️  注意：{scene_name} 場景的幾何數據不完整"
+                        f"（總大小: {total_size} bytes，{small_files}/{len(ply_files)} 個小文件），"
+                        f"自動回退到 NYCU 場景以確保計算品質。"
+                    )
+                    return False
+
+        return True
+
+    except Exception as e:
+        logger.warning(f"檢查場景 {scene_name} 健康度時出錯: {e}，回退到 NYCU")
+        return False
+
+
 # --- 輔助函數：獲取場景 XML 路徑 ---
 def get_scene_xml_file_path(scene_name: str) -> str:
     """
-    根據場景名稱獲取對應的 XML 文件路徑
+    根據場景名稱獲取對應的 XML 文件路徑，包含智能健康度檢查和回退機制
     """
     try:
         # 將前端路由參數映射到後端場景名稱
         scene_mapping = {
             "nycu": "NYCU",
             "lotus": "Lotus",
+            "ntpu": "NTPU",
+            "nanliao": "Nanliao",
         }
 
         backend_scene_name = scene_mapping.get(scene_name.lower(), "NYCU")
+        original_scene_name = backend_scene_name
 
-        # 特殊處理：Lotus 場景的幾何數據不完整，發出警告
-        if backend_scene_name == "Lotus":
-            logger.warning(
-                "⚠️  注意：Lotus 場景的幾何數據不完整（mesh 檔案太小），"
-                "可能導致 SINR/CFR/Doppler 計算結果異常。"
-                "建議使用 NYCU 場景或更新 Lotus 場景的 PLY 檔案。"
-            )
-            # 目前仍然使用 Lotus 場景，但發出警告
-            # 如果要回退到 NYCU，可以取消註釋下一行：
-            # backend_scene_name = "NYCU"
+        # 獲取 XML 路徑
+        try:
+            xml_path = get_scene_xml_path(backend_scene_name)
+        except Exception as e:
+            logger.warning(f"獲取場景檔案失敗: {e}，回退到 NYCU 場景")
+            backend_scene_name = "NYCU"
+            xml_path = get_scene_xml_path(backend_scene_name)
 
-        xml_path = get_scene_xml_path(backend_scene_name)
+        # 健康度檢查
+        if not check_scene_health(original_scene_name, xml_path):
+            logger.info(f"場景 {original_scene_name} 健康度檢查失敗，回退到 NYCU 場景")
+            backend_scene_name = "NYCU"
+            xml_path = get_scene_xml_path(backend_scene_name)
 
         logger.info(f"場景 '{scene_name}' 映射到 XML 路徑: {xml_path}")
         return str(xml_path)
+
     except Exception as e:
         logger.error(f"獲取場景 XML 路徑失敗，使用預設 NYCU: {e}")
         return str(NYCU_XML_PATH)

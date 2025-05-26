@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../../styles/Navbar.scss'
 import SINRViewer from '../viewers/SINRViewer'
@@ -45,7 +45,6 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
     const navigate = useNavigate()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [isSceneDropdownOpen, setIsSceneDropdownOpen] = useState(false)
 
     // States for modal visibility
     const [showSINRModal, setShowSINRModal] = useState(false)
@@ -83,16 +82,11 @@ const Navbar: React.FC<NavbarProps> = ({
         setIsMenuOpen(!isMenuOpen)
     }
 
-    const toggleSceneDropdown = () => {
-        setIsSceneDropdownOpen(!isSceneDropdownOpen)
-    }
-
     const handleSceneChange = (sceneKey: string) => {
         // 根據當前的視圖導航到新場景
         const currentView =
             activeComponent === '3DRT' ? 'stereogram' : 'floor-plan'
         navigate(`/${sceneKey}/${currentView}`)
-        setIsSceneDropdownOpen(false)
     }
 
     const handleFloorPlanClick = () => {
@@ -180,35 +174,62 @@ const Navbar: React.FC<NavbarProps> = ({
         },
     ]
 
+    const [dropdownPosition, setDropdownPosition] = useState<{ left: number }>({
+        left: 0,
+    })
+    const logoRef = useRef<HTMLDivElement>(null)
+
+    // 計算下拉選單位置
+    useEffect(() => {
+        const updatePosition = () => {
+            if (logoRef.current) {
+                const rect = logoRef.current.getBoundingClientRect()
+                setDropdownPosition({
+                    left: rect.left + rect.width / 2,
+                })
+            }
+        }
+
+        // 初始計算
+        updatePosition()
+
+        // 監聽視窗調整事件
+        window.addEventListener('resize', updatePosition)
+        return () => {
+            window.removeEventListener('resize', updatePosition)
+        }
+    }, [])
+
     return (
         <>
             <nav className="navbar">
                 <div className="navbar-container">
-                    <div className="navbar-logo" onClick={toggleSceneDropdown}>
-                        {getSceneDisplayName(currentScene)}
-                        <span className="dropdown-arrow">▼</span>
-                        {isSceneDropdownOpen && (
-                            <div className="scene-dropdown">
-                                {Object.entries(SCENE_DISPLAY_NAMES).map(
-                                    ([key, value]) => (
-                                        <div
-                                            key={key}
-                                            className={`scene-option ${
-                                                key === currentScene
-                                                    ? 'active'
-                                                    : ''
-                                            }`}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleSceneChange(key)
-                                            }}
-                                        >
-                                            {value}
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        )}
+                    <div className="navbar-dropdown-wrapper">
+                        <div className="navbar-logo" ref={logoRef}>
+                            {getSceneDisplayName(currentScene)}
+                            <span className="dropdown-arrow">▼</span>
+                        </div>
+                        <div
+                            className="scene-dropdown"
+                            style={{ left: `${dropdownPosition.left}px` }}
+                        >
+                            {Object.entries(SCENE_DISPLAY_NAMES).map(
+                                ([key, value]) => (
+                                    <div
+                                        key={key}
+                                        className={`scene-option ${
+                                            key === currentScene ? 'active' : ''
+                                        }`}
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleSceneChange(key)
+                                        }}
+                                    >
+                                        {value}
+                                    </div>
+                                )
+                            )}
+                        </div>
                     </div>
 
                     <div className="navbar-menu-toggle" onClick={toggleMenu}>

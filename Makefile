@@ -18,4 +18,4 @@ clean:
 	docker network prune -f
 
 build:
-	docker compose build --no-cache
+	docker compose build

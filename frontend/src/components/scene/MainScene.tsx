@@ -64,6 +64,7 @@ const MainScene: React.FC<MainSceneProps> = ({
         satelliteTexture.colorSpace = SRGBColorSpace
         satelliteTexture.repeat.set(1, 1)
         satelliteTexture.anisotropy = 16
+        satelliteTexture.flipY = false
 
         // 處理場景中的所有網格
         root.traverse((o: THREE.Object3D) => {

@@ -10,6 +10,7 @@ from app.core.config import (
     SINR_MAP_IMAGE_PATH,
     DOPPLER_IMAGE_PATH,
     CHANNEL_RESPONSE_IMAGE_PATH,
+    get_scene_xml_path,
 )
 from app.domains.simulation.models.simulation_model import (
     SimulationParameters,
@@ -59,13 +60,16 @@ async def get_scene_image():
 
 
 @router.get("/cfr-plot", response_description="通道頻率響應圖")
-async def get_cfr_plot(session: AsyncSession = Depends(get_session)):
+async def get_cfr_plot(
+    session: AsyncSession = Depends(get_session),
+    scene: str = Query("nycu", description="場景名稱 (nycu, lotus)"),
+):
     """產生並回傳通道頻率響應 (CFR) 圖"""
-    logger.info("--- API Request: /cfr-plot ---")
+    logger.info(f"--- API Request: /cfr-plot?scene={scene} ---")
 
     try:
         success = await sionna_service.generate_cfr_plot(
-            session=session, output_path=str(CFR_PLOT_IMAGE_PATH)
+            session=session, output_path=str(CFR_PLOT_IMAGE_PATH), scene_name=scene
         )
 
         if not success:
@@ -80,6 +84,7 @@ async def get_cfr_plot(session: AsyncSession = Depends(get_session)):
 @router.get("/sinr-map", response_description="SINR 地圖")
 async def get_sinr_map(
     session: AsyncSession = Depends(get_session),
+    scene: str = Query("nycu", description="場景名稱 (nycu, lotus)"),
     sinr_vmin: float = Query(-40.0, description="SINR 最小值 (dB)"),
     sinr_vmax: float = Query(0.0, description="SINR 最大值 (dB)"),
     cell_size: float = Query(1.0, description="Radio map 網格大小 (m)"),
@@ -87,13 +92,14 @@ async def get_sinr_map(
 ):
     """產生並回傳 SINR 地圖"""
     logger.info(
-        f"--- API Request: /sinr-map?sinr_vmin={sinr_vmin}&sinr_vmax={sinr_vmax}&cell_size={cell_size}&samples_per_tx={samples_per_tx} ---"
+        f"--- API Request: /sinr-map?scene={scene}&sinr_vmin={sinr_vmin}&sinr_vmax={sinr_vmax}&cell_size={cell_size}&samples_per_tx={samples_per_tx} ---"
     )
 
     try:
         success = await sionna_service.generate_sinr_map(
             session=session,
             output_path=str(SINR_MAP_IMAGE_PATH),
+            scene_name=scene,
             sinr_vmin=sinr_vmin,
             sinr_vmax=sinr_vmax,
             cell_size=cell_size,
@@ -110,13 +116,16 @@ async def get_sinr_map(
 
 
 @router.get("/doppler-plots", response_description="延遲多普勒圖")
-async def get_doppler_plots(session: AsyncSession = Depends(get_session)):
+async def get_doppler_plots(
+    session: AsyncSession = Depends(get_session),
+    scene: str = Query("nycu", description="場景名稱 (nycu, lotus)"),
+):
     """產生並回傳延遲多普勒圖"""
-    logger.info("--- API Request: /doppler-plots ---")
+    logger.info(f"--- API Request: /doppler-plots?scene={scene} ---")
 
     try:
         success = await sionna_service.generate_doppler_plots(
-            session, str(DOPPLER_IMAGE_PATH)
+            session, str(DOPPLER_IMAGE_PATH), scene_name=scene
         )
 
         if not success:
@@ -129,14 +138,18 @@ async def get_doppler_plots(session: AsyncSession = Depends(get_session)):
 
 
 @router.get("/channel-response", response_description="通道響應圖")
-async def get_channel_response(session: AsyncSession = Depends(get_session)):
+async def get_channel_response(
+    session: AsyncSession = Depends(get_session),
+    scene: str = Query("nycu", description="場景名稱 (nycu, lotus)"),
+):
     """產生並回傳通道響應圖，顯示 H_des、H_jam 和 H_all 的三維圖"""
-    logger.info("--- API Request: /channel-response ---")
+    logger.info(f"--- API Request: /channel-response?scene={scene} ---")
 
     try:
         success = await sionna_service.generate_channel_response_plots(
             session,
             str(CHANNEL_RESPONSE_IMAGE_PATH),
+            scene_name=scene,
         )
 
         if not success:

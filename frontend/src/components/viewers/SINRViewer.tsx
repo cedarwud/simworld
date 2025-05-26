@@ -7,6 +7,7 @@ const SINRViewer: React.FC<ViewerProps> = ({
     onReportLastUpdateToNavbar,
     reportRefreshHandlerToNavbar,
     reportIsLoadingToNavbar,
+    currentScene,
 }) => {
     const [isLoading, setIsLoading] = useState(true)
     const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -35,8 +36,8 @@ const SINRViewer: React.FC<ViewerProps> = ({
         setIsLoading(true)
         setError(null)
 
-        // 添加timestamp參數防止緩存
-        const apiUrl = `${API_PATH}?sinr_vmin=${sinrVmin}&sinr_vmax=${sinrVmax}&cell_size=${cellSize}&samples_per_tx=${samplesPerTx}&t=${new Date().getTime()}`
+        // 添加timestamp參數防止緩存，並添加 scene 參數
+        const apiUrl = `${API_PATH}?scene=${currentScene}&sinr_vmin=${sinrVmin}&sinr_vmax=${sinrVmax}&cell_size=${cellSize}&samples_per_tx=${samplesPerTx}&t=${new Date().getTime()}`
 
         fetch(apiUrl)
             .then((response) => {
@@ -85,6 +86,7 @@ const SINRViewer: React.FC<ViewerProps> = ({
                 }
             })
     }, [
+        currentScene,
         sinrVmin,
         sinrVmax,
         cellSize,

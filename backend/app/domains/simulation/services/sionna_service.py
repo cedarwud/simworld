@@ -25,6 +25,7 @@ from app.core.config import (
     DOPPLER_IMAGE_PATH,
     CHANNEL_RESPONSE_IMAGE_PATH,
     SINR_MAP_IMAGE_PATH,
+    get_scene_xml_path,
 )
 
 # 從設備領域中導入設備服務和儲存庫
@@ -54,6 +55,40 @@ logger = logging.getLogger(__name__)
 # --- 新增：場景背景顏色常數 ---
 SCENE_BACKGROUND_COLOR_RGB = [0.5, 0.5, 0.5]
 # --- End Constant ---
+
+
+# --- 輔助函數：獲取場景 XML 路徑 ---
+def get_scene_xml_file_path(scene_name: str) -> str:
+    """
+    根據場景名稱獲取對應的 XML 文件路徑
+    """
+    try:
+        # 將前端路由參數映射到後端場景名稱
+        scene_mapping = {
+            "nycu": "NYCU",
+            "lotus": "Lotus",
+        }
+
+        backend_scene_name = scene_mapping.get(scene_name.lower(), "NYCU")
+
+        # 特殊處理：Lotus 場景的幾何數據不完整，發出警告
+        if backend_scene_name == "Lotus":
+            logger.warning(
+                "⚠️  注意：Lotus 場景的幾何數據不完整（mesh 檔案太小），"
+                "可能導致 SINR/CFR/Doppler 計算結果異常。"
+                "建議使用 NYCU 場景或更新 Lotus 場景的 PLY 檔案。"
+            )
+            # 目前仍然使用 Lotus 場景，但發出警告
+            # 如果要回退到 NYCU，可以取消註釋下一行：
+            # backend_scene_name = "NYCU"
+
+        xml_path = get_scene_xml_path(backend_scene_name)
+
+        logger.info(f"場景 '{scene_name}' 映射到 XML 路徑: {xml_path}")
+        return str(xml_path)
+    except Exception as e:
+        logger.error(f"獲取場景 XML 路徑失敗，使用預設 NYCU: {e}")
+        return str(NYCU_XML_PATH)
 
 
 # --- 通用函數：GPU 設置 ---
@@ -331,7 +366,9 @@ def generate_empty_scene_image(output_path: str):
 
 # 新增函數: generate_cfr_plot
 async def generate_cfr_plot(
-    session: AsyncSession, output_path: str = str(CFR_PLOT_IMAGE_PATH)
+    session: AsyncSession,
+    output_path: str = str(CFR_PLOT_IMAGE_PATH),
+    scene_name: str = "nycu",
 ) -> bool:
     """
     生成 Channel Frequency Response (CFR) 圖，基於 Sionna 的模擬。
@@ -451,7 +488,7 @@ async def generate_cfr_plot(
             return False
 
         # 參數設置
-        SCENE_NAME = str(NYCU_XML_PATH)
+        SCENE_NAME = get_scene_xml_file_path(scene_name)
         logger.info(f"Loading scene from: {SCENE_NAME}")
 
         TX_ARRAY_CONFIG = {
@@ -629,6 +666,7 @@ async def generate_cfr_plot(
 async def generate_sinr_map(
     session: AsyncSession,
     output_path: str = str(SINR_MAP_IMAGE_PATH),
+    scene_name: str = "nycu",
     sinr_vmin: float = -40,
     sinr_vmax: float = 0,
     cell_size: float = 1.0,
@@ -731,8 +769,8 @@ async def generate_sinr_map(
             return False
 
         # 參數設置
-        scene_name = str(NYCU_XML_PATH)
-        logger.info(f"從 {scene_name} 加載場景")
+        scene_xml_path = get_scene_xml_file_path(scene_name)
+        logger.info(f"從 {scene_xml_path} 加載場景")
 
         tx_array_config = {
             "num_rows": 1,
@@ -752,7 +790,7 @@ async def generate_sinr_map(
 
         # 場景設置
         logger.info("設置場景")
-        scene = load_scene(scene_name)
+        scene = load_scene(scene_xml_path)
         scene.tx_array = PlanarArray(**tx_array_config)
         scene.rx_array = PlanarArray(**rx_array_config)
 
@@ -898,6 +936,7 @@ async def generate_sinr_map(
 async def generate_doppler_plots(
     session: AsyncSession,
     output_path: str = str(DOPPLER_IMAGE_PATH),
+    scene_name: str = "nycu",
 ) -> bool:
     """
     生成延遲多普勒圖 (Delay-Doppler)，基於 delay-doppler-v2.py 的功能
@@ -1021,8 +1060,9 @@ async def generate_doppler_plots(
         num_ofdm_symbols = 1024
 
         # 建立場景與天線配置
-        logger.info(f"從 {NYCU_XML_PATH} 加載場景")
-        scene = load_scene(NYCU_XML_PATH)
+        scene_xml_path = get_scene_xml_file_path(scene_name)
+        logger.info(f"從 {scene_xml_path} 加載場景")
+        scene = load_scene(scene_xml_path)
         scene.tx_array = PlanarArray(**TX_ARRAY_CONFIG)
         scene.rx_array = PlanarArray(**RX_ARRAY_CONFIG)
 
@@ -1205,7 +1245,9 @@ async def generate_doppler_plots(
 
 # 新增函數: 整合 tf.py 的通道響應圖功能
 async def generate_channel_response_plots(
-    session: AsyncSession, output_path: str = str(CHANNEL_RESPONSE_IMAGE_PATH)
+    session: AsyncSession,
+    output_path: str = str(CHANNEL_RESPONSE_IMAGE_PATH),
+    scene_name: str = "nycu",
 ) -> bool:
     """
     生成通道響應圖 (H_des, H_jam, H_all)，基於 tf.py 中的功能。
@@ -1300,8 +1342,8 @@ async def generate_channel_response_plots(
         logger.info(f"使用接收器 '{rx_config[0]}' 在位置 {rx_config[1]}")
 
         # 從 config.py 取得場景路徑
-        scene_name = str(NYCU_XML_PATH)
-        logger.info(f"從 {scene_name} 加載場景")
+        scene_xml_path = get_scene_xml_file_path(scene_name)
+        logger.info(f"從 {scene_xml_path} 加載場景")
 
         # 參數設置 (從 tf.py 移植)
         tx_array_config = {
@@ -1330,7 +1372,7 @@ async def generate_channel_response_plots(
 
         # 場景設置
         logger.info("設置場景")
-        scene = load_scene(scene_name)
+        scene = load_scene(scene_xml_path)
         scene.tx_array = PlanarArray(**tx_array_config)
         scene.rx_array = PlanarArray(**rx_array_config)
 
@@ -1509,17 +1551,22 @@ class SionnaSimulationService(SimulationServiceInterface):
 
         return verify_output_file(output_path) if result else False
 
-    async def generate_cfr_plot(self, session: AsyncSession, output_path: str) -> bool:
+    async def generate_cfr_plot(
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
+    ) -> bool:
         """生成通道頻率響應(CFR)圖像"""
         logger.info(
-            f"SionnaSimulationService: Calling global generate_cfr_plot, output_path: {output_path}"
+            f"SionnaSimulationService: Calling global generate_cfr_plot, output_path: {output_path}, scene: {scene_name}"
         )
-        return await generate_cfr_plot(session=session, output_path=output_path)
+        return await generate_cfr_plot(
+            session=session, output_path=output_path, scene_name=scene_name
+        )
 
     async def generate_sinr_map(
         self,
         session: AsyncSession,
         output_path: str,  # This is an absolute path from config
+        scene_name: str = "nycu",
         sinr_vmin: float = -40.0,
         sinr_vmax: float = 0.0,
         cell_size: float = 1.0,
@@ -1527,11 +1574,12 @@ class SionnaSimulationService(SimulationServiceInterface):
     ) -> bool:
         """生成SINR地圖"""
         logger.info(
-            f"SionnaSimulationService: Calling global generate_sinr_map, output_path: {output_path}"
+            f"SionnaSimulationService: Calling global generate_sinr_map, output_path: {output_path}, scene: {scene_name}"
         )
         return await generate_sinr_map(
             session=session,
             output_path=output_path,
+            scene_name=scene_name,
             sinr_vmin=sinr_vmin,
             sinr_vmax=sinr_vmax,
             cell_size=cell_size,
@@ -1539,23 +1587,25 @@ class SionnaSimulationService(SimulationServiceInterface):
         )
 
     async def generate_doppler_plots(
-        self, session: AsyncSession, output_path: str
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
     ) -> bool:
         """生成延遲多普勒圖"""
         logger.info(
-            f"SionnaSimulationService: Calling global generate_doppler_plots, output_path: {output_path}"
+            f"SionnaSimulationService: Calling global generate_doppler_plots, output_path: {output_path}, scene: {scene_name}"
         )
-        return await generate_doppler_plots(session=session, output_path=output_path)
+        return await generate_doppler_plots(
+            session=session, output_path=output_path, scene_name=scene_name
+        )
 
     async def generate_channel_response_plots(
-        self, session: AsyncSession, output_path: str
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
     ) -> bool:
         """生成通道響應圖"""
         logger.info(
-            f"SionnaSimulationService: Calling global generate_channel_response_plots, output_path: {output_path}"
+            f"SionnaSimulationService: Calling global generate_channel_response_plots, output_path: {output_path}, scene: {scene_name}"
         )
         return await generate_channel_response_plots(
-            session=session, output_path=output_path
+            session=session, output_path=output_path, scene_name=scene_name
         )
 
     async def run_simulation(

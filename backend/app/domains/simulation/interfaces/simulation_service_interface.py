@@ -14,7 +14,9 @@ class SimulationServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def generate_cfr_plot(self, session: AsyncSession, output_path: str) -> bool:
+    async def generate_cfr_plot(
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
+    ) -> bool:
         """生成通道頻率響應(CFR)圖像"""
         pass
 
@@ -23,6 +25,7 @@ class SimulationServiceInterface(ABC):
         self,
         session: AsyncSession,
         output_path: str,
+        scene_name: str = "nycu",
         sinr_vmin: float = -40.0,
         sinr_vmax: float = 0.0,
         cell_size: float = 1.0,
@@ -33,14 +36,14 @@ class SimulationServiceInterface(ABC):
 
     @abstractmethod
     async def generate_doppler_plots(
-        self, session: AsyncSession, output_path: str
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
     ) -> bool:
         """生成延遲多普勒圖"""
         pass
 
     @abstractmethod
     async def generate_channel_response_plots(
-        self, session: AsyncSession, output_path: str
+        self, session: AsyncSession, output_path: str, scene_name: str = "nycu"
     ) -> bool:
         """生成通道響應圖"""
         pass

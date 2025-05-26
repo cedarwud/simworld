@@ -7,6 +7,7 @@ const DelayDopplerViewer: React.FC<ViewerProps> = ({
     onReportLastUpdateToNavbar,
     reportRefreshHandlerToNavbar,
     reportIsLoadingToNavbar,
+    currentScene,
 }) => {
     const [isLoading, setIsLoading] = useState(true)
     const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -32,8 +33,8 @@ const DelayDopplerViewer: React.FC<ViewerProps> = ({
         setIsLoading(true)
         setError(null)
 
-        // 添加timestamp參數防止緩存
-        const apiUrl = `${API_PATH}?t=${new Date().getTime()}`
+        // 添加timestamp參數防止緩存，並添加 scene 參數
+        const apiUrl = `${API_PATH}?scene=${currentScene}&t=${new Date().getTime()}`
 
         fetch(apiUrl)
             .then((response) => {
@@ -81,7 +82,7 @@ const DelayDopplerViewer: React.FC<ViewerProps> = ({
                     }, 2000) // 2秒後重試
                 }
             })
-    }, [updateTimestamp, retryCount])
+    }, [updateTimestamp, retryCount, currentScene])
 
     useEffect(() => {
         reportRefreshHandlerToNavbar(loadDopplerImage)

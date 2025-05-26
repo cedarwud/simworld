@@ -271,6 +271,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 config.refreshHandlerRef.current = handler
                             }}
                             reportIsLoadingToNavbar={config.setIsLoading}
+                            currentScene={currentScene}
                         />
                     }
                 />

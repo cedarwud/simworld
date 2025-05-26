@@ -19,3 +19,6 @@ clean:
 
 build:
 	docker compose build
+
+re-b:
+	docker compose restart backend

@@ -51,6 +51,16 @@ export const ApiRoutes = {
     getModel: (modelName: string) => `${API_BASE_URL}/sionna/models/${modelName}`,
   },
   
+  // 場景相關API
+  scenes: {
+    base: `${API_BASE_URL}/simulations/scenes`,
+    getAll: `${API_BASE_URL}/simulations/scenes`,
+    getScene: (sceneName: string) => `${API_BASE_URL}/simulations/scene/${sceneName}`,
+    getSceneModel: (sceneName: string) => `${API_BASE_URL}/simulations/scene/${sceneName}/model`,
+    getSceneTexture: (sceneName: string, textureName: string) => 
+      `/static/scene/${sceneName}/textures/${textureName}`,
+  },
+  
   // 臨時的衛星可見性路由
   satelliteOps: {
     getVisibleSatellites: `${API_BASE_URL}/satellite-ops/visible_satellites`,
@@ -68,4 +78,4 @@ export const ApiRoutes = {
   }
 };
 
-export default ApiRoutes; 
+export default ApiRoutes;

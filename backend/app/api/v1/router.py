@@ -98,6 +98,34 @@ async def get_model(model_name: str):
     )
 
 
+# 添加場景資源路由
+@api_router.get("/scenes/{scene_name}/model", tags=["Scenes"])
+async def get_scene_model(scene_name: str):
+    """提供3D場景模型文件"""
+    # 定義場景文件存儲路徑
+    static_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "static",
+    )
+    scenes_dir = os.path.join(static_dir, "scene")
+    scene_dir = os.path.join(scenes_dir, scene_name)
+
+    # 獲取對應的場景模型文件
+    model_file = os.path.join(scene_dir, f"{scene_name}.glb")
+
+    # 檢查文件是否存在
+    if not os.path.exists(model_file):
+        return Response(
+            content=f"場景 {scene_name} 的模型不存在",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    # 返回場景模型文件
+    return FileResponse(
+        path=model_file, media_type="model/gltf-binary", filename=f"{scene_name}.glb"
+    )
+
+
 # 定義衛星可見性數據模型
 class VisibleSatelliteInfo(BaseModel):
     norad_id: str

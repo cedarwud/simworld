@@ -175,3 +175,114 @@ async def run_simulation(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"執行模擬時出錯: {str(e)}",
         )
+
+
+@router.get("/scenes", response_description="獲取可用場景列表")
+async def get_available_scenes():
+    """獲取系統中所有可用場景的列表"""
+    logger.info("--- API Request: /scenes (獲取可用場景列表) ---")
+
+    try:
+        from app.core.config import SCENE_DIR
+        import os
+
+        # 檢查場景目錄是否存在
+        if not os.path.exists(SCENE_DIR):
+            return {"scenes": [], "default": "NYCU"}
+
+        # 獲取所有子目錄作為場景名稱
+        scenes = []
+        for item in os.listdir(SCENE_DIR):
+            scene_path = os.path.join(SCENE_DIR, item)
+            if os.path.isdir(scene_path):
+                # 檢查是否有GLB模型文件
+                if os.path.exists(os.path.join(scene_path, f"{item}.glb")):
+                    scenes.append(
+                        {
+                            "name": item,
+                            "has_model": True,
+                            "has_xml": os.path.exists(
+                                os.path.join(scene_path, f"{item}.xml")
+                            ),
+                        }
+                    )
+
+        # 當沒有場景時返回空列表
+        if not scenes:
+            return {"scenes": [], "default": "NYCU"}
+
+        return {"scenes": scenes, "default": "NYCU"}
+    except Exception as e:
+        logger.error(f"獲取場景列表時出錯: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"獲取場景列表時出錯: {str(e)}")
+
+
+@router.get("/scene/{scene_name}", response_description="獲取特定場景信息")
+async def get_scene_info(scene_name: str):
+    """獲取特定場景的詳細信息"""
+    logger.info(f"--- API Request: /scene/{scene_name} (獲取場景信息) ---")
+
+    try:
+        from app.core.config import (
+            get_scene_dir,
+            get_scene_model_path,
+            get_scene_xml_path,
+        )
+        import os
+
+        scene_dir = get_scene_dir(scene_name)
+        if not os.path.exists(scene_dir):
+            raise HTTPException(status_code=404, detail=f"場景 {scene_name} 不存在")
+
+        # 檢查場景文件
+        model_path = get_scene_model_path(scene_name)
+        xml_path = get_scene_xml_path(scene_name)
+
+        # 獲取場景中的紋理文件
+        textures = []
+        textures_dir = os.path.join(scene_dir, "textures")
+        if os.path.exists(textures_dir):
+            textures = [
+                f
+                for f in os.listdir(textures_dir)
+                if os.path.isfile(os.path.join(textures_dir, f))
+            ]
+
+        return {
+            "name": scene_name,
+            "has_model": os.path.exists(model_path),
+            "has_xml": os.path.exists(xml_path),
+            "textures": textures,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"獲取場景 {scene_name} 信息時出錯: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"獲取場景信息時出錯: {str(e)}")
+
+
+@router.get("/scene/{scene_name}/model", response_description="獲取場景模型文件")
+async def get_scene_model(scene_name: str):
+    """獲取特定場景的3D模型文件"""
+    logger.info(f"--- API Request: /scene/{scene_name}/model (獲取場景模型) ---")
+
+    try:
+        from app.core.config import get_scene_model_path
+        import os
+
+        model_path = get_scene_model_path(scene_name)
+        if not os.path.exists(model_path):
+            raise HTTPException(
+                status_code=404, detail=f"場景 {scene_name} 的模型不存在"
+            )
+
+        return StreamingResponse(
+            open(model_path, "rb"),
+            media_type="model/gltf-binary",
+            headers={"Content-Disposition": f"attachment; filename={scene_name}.glb"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"獲取場景 {scene_name} 模型時出錯: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"獲取場景模型時出錯: {str(e)}")

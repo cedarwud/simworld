@@ -10,10 +10,15 @@ import { VisibleSatelliteInfo } from '../../types/satellite'
 import SatelliteManager from './satellite/SatelliteManager'
 import { ApiRoutes } from '../../config/apiRoutes'
 
-const SCENE_URL = '/static/models/NYCU.glb'
+// 使用新的場景API路由，NYCU是場景名稱
+const CURRENT_SCENE = 'NYCU'
+const SCENE_URL = ApiRoutes.scenes.getSceneModel(CURRENT_SCENE)
 const BS_MODEL_URL = ApiRoutes.simulations.getModel('tower')
 const JAMMER_MODEL_URL = ApiRoutes.simulations.getModel('jam')
-const SATELLITE_TEXTURE_URL = '/static/NYCU/textures/EXPORT_GOOGLE_SAT_WM.png'
+const SATELLITE_TEXTURE_URL = ApiRoutes.scenes.getSceneTexture(
+    CURRENT_SCENE,
+    'EXPORT_GOOGLE_SAT_WM.png'
+)
 const UAV_SCALE = 10
 
 // 預加載模型以提高性能

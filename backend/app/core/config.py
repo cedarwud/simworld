@@ -38,17 +38,39 @@ APP_DIR = CORE_DIR.parent  # /app/app
 STATIC_DIR = APP_DIR / "static"  # Correct path: /app/app/static
 MODELS_DIR = STATIC_DIR / "models"  # Correct path: /app/app/static/models
 STATIC_IMAGES_DIR = STATIC_DIR / "images"  # Correct path: /app/app/static/images
-NYCU_DIR = STATIC_DIR / "NYCU"  # 新增: NYCU 目錄路徑
+SCENE_DIR = STATIC_DIR / "scene"  # 新增: 場景總目錄路徑
+NYCU_DIR = SCENE_DIR / "NYCU"  # 更新: NYCU 目錄現在在 scene 子目錄下
 
 # 建立目錄
 # STATIC_DIR.mkdir(parents=True, exist_ok=True) # 目錄應該由 volume mount 提供，不需在 config 創建
 MODELS_DIR.mkdir(parents=True, exist_ok=True)  # 但確保子目錄存在是好的
 STATIC_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-NYCU_DIR.mkdir(parents=True, exist_ok=True)  # 新增: 確保 NYCU 目錄存在
+SCENE_DIR.mkdir(parents=True, exist_ok=True)  # 新增: 確保場景總目錄存在
+NYCU_DIR.mkdir(parents=True, exist_ok=True)  # 確保 NYCU 場景目錄存在
 
-# 定義 GLB 和 XML 路徑 (基於修正後的 MODELS_DIR 和 NYCU_DIR)
-NYCU_GLB_PATH = MODELS_DIR / "NYCU.glb"
-NYCU_XML_PATH = NYCU_DIR / "NYCU.xml"  # 新增: NYCU.xml 文件路徑
+# 定義 GLB 和 XML 路徑 (基於修正後的 SCENE_DIR 和 NYCU_DIR)
+NYCU_GLB_PATH = NYCU_DIR / "NYCU.glb"
+NYCU_XML_PATH = NYCU_DIR / "NYCU.xml"  # NYCU.xml 文件路徑
+
+
+# 通用場景路徑函數，支援多種場景（如 'NYCU', 'Lotus' 等）
+def get_scene_dir(scene_name: str) -> Path:
+    return SCENE_DIR / scene_name
+
+
+def get_scene_model_path(scene_name: str, model_name: str = None) -> Path:
+    """獲取場景模型路徑，若未指定模型名稱則使用場景名稱作為模型名稱"""
+    if model_name is None:
+        model_name = scene_name
+    return get_scene_dir(scene_name) / f"{model_name}.glb"
+
+
+def get_scene_xml_path(scene_name: str, xml_name: str = None) -> Path:
+    """獲取場景XML路徑，若未指定XML名稱則使用場景名稱作為XML名稱"""
+    if xml_name is None:
+        xml_name = scene_name
+    return get_scene_dir(scene_name) / f"{xml_name}.xml"
+
 
 # 舊版 OUTPUT_DIR，保持定義以兼容可能還在使用的地方，但指向新位置
 OUTPUT_DIR = STATIC_IMAGES_DIR

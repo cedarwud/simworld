@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './styles/index.scss'
 import App from './App.tsx'
 import axios from 'axios'
@@ -50,6 +51,36 @@ console.warn = function (...args) {
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <App />
+        <BrowserRouter>
+            <Routes>
+                {/* 首頁重定向到 /nycu/stereogram */}
+                <Route
+                    path="/"
+                    element={<Navigate to="/nycu/stereogram" replace />}
+                />
+
+                {/* /nycu 重定向到 /nycu/stereogram */}
+                <Route
+                    path="/nycu"
+                    element={<Navigate to="/nycu/stereogram" replace />}
+                />
+
+                {/* 場景路由 */}
+                <Route
+                    path="/:scene/stereogram"
+                    element={<App activeView="stereogram" />}
+                />
+                <Route
+                    path="/:scene/floor-plan"
+                    element={<App activeView="floor-plan" />}
+                />
+
+                {/* 404 重定向到預設場景 */}
+                <Route
+                    path="*"
+                    element={<Navigate to="/nycu/stereogram" replace />}
+                />
+            </Routes>
+        </BrowserRouter>
     </StrictMode>
 )

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../../styles/Navbar.scss'
 import SINRViewer from '../viewers/SINRViewer'
 import CFRViewer from '../viewers/CFRViewer'
@@ -10,6 +11,13 @@ import { ViewerProps } from '../../types/viewer'
 interface NavbarProps {
     onMenuClick: (component: string) => void
     activeComponent: string
+    currentScene: string
+}
+
+// 場景配置
+const SCENE_CONFIG = {
+    nycu: '陽明交通大學',
+    lotus: '荷花池',
 }
 
 // Define a type for the individual modal configuration
@@ -32,8 +40,14 @@ interface ModalConfig {
     ViewerComponent: React.FC<ViewerProps>
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onMenuClick, activeComponent }) => {
+const Navbar: React.FC<NavbarProps> = ({
+    onMenuClick,
+    activeComponent,
+    currentScene,
+}) => {
+    const navigate = useNavigate()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [isSceneDropdownOpen, setIsSceneDropdownOpen] = useState(false)
 
     // States for modal visibility
     const [showSINRModal, setShowSINRModal] = useState(false)
@@ -69,6 +83,28 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, activeComponent }) => {
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen)
+    }
+
+    const toggleSceneDropdown = () => {
+        setIsSceneDropdownOpen(!isSceneDropdownOpen)
+    }
+
+    const handleSceneChange = (sceneKey: string) => {
+        // 根據當前的視圖導航到新場景
+        const currentView =
+            activeComponent === '3DRT' ? 'stereogram' : 'floor-plan'
+        navigate(`/${sceneKey}/${currentView}`)
+        setIsSceneDropdownOpen(false)
+    }
+
+    const handleFloorPlanClick = () => {
+        navigate(`/${currentScene}/floor-plan`)
+        onMenuClick('2DRT')
+    }
+
+    const handleStereogramClick = () => {
+        navigate(`/${currentScene}/stereogram`)
+        onMenuClick('3DRT')
     }
 
     const modalConfigs: ModalConfig[] = [
@@ -150,7 +186,34 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, activeComponent }) => {
         <>
             <nav className="navbar">
                 <div className="navbar-container">
-                    <div className="navbar-logo">NTN Stack</div>
+                    <div className="navbar-logo" onClick={toggleSceneDropdown}>
+                        {SCENE_CONFIG[
+                            currentScene as keyof typeof SCENE_CONFIG
+                        ] || '陽明交通大學'}
+                        <span className="dropdown-arrow">▼</span>
+                        {isSceneDropdownOpen && (
+                            <div className="scene-dropdown">
+                                {Object.entries(SCENE_CONFIG).map(
+                                    ([key, value]) => (
+                                        <div
+                                            key={key}
+                                            className={`scene-option ${
+                                                key === currentScene
+                                                    ? 'active'
+                                                    : ''
+                                            }`}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleSceneChange(key)
+                                            }}
+                                        >
+                                            {value}
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="navbar-menu-toggle" onClick={toggleMenu}>
                         <span
@@ -177,7 +240,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, activeComponent }) => {
                             className={`navbar-item ${
                                 activeComponent === '2DRT' ? 'active' : ''
                             }`}
-                            onClick={() => onMenuClick('2DRT')}
+                            onClick={handleFloorPlanClick}
                         >
                             Floor Plan
                         </li>
@@ -185,7 +248,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, activeComponent }) => {
                             className={`navbar-item ${
                                 activeComponent === '3DRT' ? 'active' : ''
                             }`}
-                            onClick={() => onMenuClick('3DRT')}
+                            onClick={handleStereogramClick}
                         >
                             Stereogram
                         </li>

@@ -1,5 +1,6 @@
 // src/App.tsx
 import { useState, useCallback, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import SceneView from './components/scene/StereogramView'
 import Layout from './components/layout/Layout'
 import Sidebar from './components/layout/Sidebar'
@@ -11,7 +12,19 @@ import { countActiveDevices } from './utils/deviceUtils'
 import { useDevices } from './hooks/useDevices'
 import { VisibleSatelliteInfo } from './types/satellite'
 
-function App() {
+interface AppProps {
+    activeView: 'stereogram' | 'floor-plan'
+}
+
+function App({ activeView }: AppProps) {
+    const { scene } = useParams<{ scene: string }>()
+
+    // 確保有預設場景
+    const currentScene = scene || 'nycu'
+
+    // 根據 activeView 設定初始組件
+    const initialComponent = activeView === 'stereogram' ? '3DRT' : '2DRT'
+
     const {
         tempDevices,
         loading,
@@ -34,7 +47,8 @@ function App() {
     const [satelliteDisplayCount, setSatelliteDisplayCount] =
         useState<number>(50)
 
-    const [activeComponent, setActiveComponent] = useState<string>('3DRT')
+    const [activeComponent, setActiveComponent] =
+        useState<string>(initialComponent)
     const [auto, setAuto] = useState(false)
     const [manualDirection, setManualDirection] = useState<
         | 'up'
@@ -242,6 +256,7 @@ function App() {
             <Navbar
                 onMenuClick={handleMenuClick}
                 activeComponent={activeComponent}
+                currentScene={currentScene}
             />
             <div className="content-wrapper">
                 <Layout

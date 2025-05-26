@@ -1,8 +1,7 @@
-import { Device as BackendDeviceType } from '../services'
 import { Device } from '../types/device'
 
 // 轉換後端設備到前端設備格式
-export const convertBackendToFrontend = (backendDevice: BackendDeviceType): Device => {
+export const convertBackendToFrontend = (backendDevice: Device): Device => {
     return {
         id: backendDevice.id,
         name: backendDevice.name,

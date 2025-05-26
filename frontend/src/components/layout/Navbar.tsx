@@ -7,17 +7,15 @@ import DelayDopplerViewer from '../viewers/DelayDopplerViewer'
 import TimeFrequencyViewer from '../viewers/TimeFrequencyViewer'
 import ViewerModal from '../ui/ViewerModal'
 import { ViewerProps } from '../../types/viewer'
+import {
+    SCENE_DISPLAY_NAMES,
+    getSceneDisplayName,
+} from '../../utils/sceneUtils'
 
 interface NavbarProps {
     onMenuClick: (component: string) => void
     activeComponent: string
     currentScene: string
-}
-
-// 場景配置
-const SCENE_CONFIG = {
-    nycu: '陽明交通大學',
-    lotus: '荷花池',
 }
 
 // Define a type for the individual modal configuration
@@ -187,13 +185,11 @@ const Navbar: React.FC<NavbarProps> = ({
             <nav className="navbar">
                 <div className="navbar-container">
                     <div className="navbar-logo" onClick={toggleSceneDropdown}>
-                        {SCENE_CONFIG[
-                            currentScene as keyof typeof SCENE_CONFIG
-                        ] || '陽明交通大學'}
+                        {getSceneDisplayName(currentScene)}
                         <span className="dropdown-arrow">▼</span>
                         {isSceneDropdownOpen && (
                             <div className="scene-dropdown">
-                                {Object.entries(SCENE_CONFIG).map(
+                                {Object.entries(SCENE_DISPLAY_NAMES).map(
                                     ([key, value]) => (
                                         <div
                                             key={key}

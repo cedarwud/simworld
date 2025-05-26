@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ApiRoutes } from '../config/apiRoutes';
+import { getBackendSceneName, getSceneTextureName } from '../utils/sceneUtils';
 
 const FALLBACK_IMAGE_PATH = '/rendered_images/scene_with_devices.png';
 
-export function useSceneImageManager() {
+export function useSceneImageManager(sceneName?: string) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,11 @@ export function useSceneImageManager() {
 
     const fetchImage = useCallback(
         async (signal: AbortSignal) => {
-            const rtEndpoint = ApiRoutes.simulations.getSceneImage;
+            // Use scene-specific texture if sceneName is provided
+            const rtEndpoint = sceneName 
+                ? ApiRoutes.scenes.getSceneTexture(getBackendSceneName(sceneName), getSceneTextureName(sceneName))
+                : ApiRoutes.simulations.getSceneImage;
+            
             setIsLoading(true);
             setError(null);
             setUsingFallback(false);
@@ -95,7 +100,7 @@ export function useSceneImageManager() {
                 setIsLoading(false);
             }
         },
-        []
+        [sceneName]
     );
 
     const handleImageLoad = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {

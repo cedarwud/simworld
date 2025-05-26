@@ -9,22 +9,10 @@ import StaticModel from './StaticModel'
 import { VisibleSatelliteInfo } from '../../types/satellite'
 import SatelliteManager from './satellite/SatelliteManager'
 import { ApiRoutes } from '../../config/apiRoutes'
-
-// 使用新的場景API路由，NYCU是場景名稱
-const CURRENT_SCENE = 'NYCU'
-const SCENE_URL = ApiRoutes.scenes.getSceneModel(CURRENT_SCENE)
-const BS_MODEL_URL = ApiRoutes.simulations.getModel('tower')
-const JAMMER_MODEL_URL = ApiRoutes.simulations.getModel('jam')
-const SATELLITE_TEXTURE_URL = ApiRoutes.scenes.getSceneTexture(
-    CURRENT_SCENE,
-    'EXPORT_GOOGLE_SAT_WM.png'
-)
-const UAV_SCALE = 10
-
-// 預加載模型以提高性能
-useGLTF.preload(SCENE_URL)
-useGLTF.preload(BS_MODEL_URL)
-useGLTF.preload(JAMMER_MODEL_URL)
+import {
+    getBackendSceneName,
+    getSceneTextureName,
+} from '../../utils/sceneUtils'
 
 export interface MainSceneProps {
     devices: any[]
@@ -38,7 +26,10 @@ export interface MainSceneProps {
     uavAnimation: boolean
     selectedReceiverIds?: number[]
     satellites?: VisibleSatelliteInfo[]
+    sceneName: string
 }
+
+const UAV_SCALE = 10
 
 const MainScene: React.FC<MainSceneProps> = ({
     devices = [],
@@ -49,7 +40,25 @@ const MainScene: React.FC<MainSceneProps> = ({
     uavAnimation,
     selectedReceiverIds = [],
     satellites = [],
+    sceneName,
 }) => {
+    // 根據場景名稱動態生成 URL
+    const backendSceneName = getBackendSceneName(sceneName)
+    const SCENE_URL = ApiRoutes.scenes.getSceneModel(backendSceneName)
+    const BS_MODEL_URL = ApiRoutes.simulations.getModel('tower')
+    const JAMMER_MODEL_URL = ApiRoutes.simulations.getModel('jam')
+    const SATELLITE_TEXTURE_URL = ApiRoutes.scenes.getSceneTexture(
+        backendSceneName,
+        getSceneTextureName(sceneName)
+    )
+
+    // 動態預加載模型以提高性能
+    useMemo(() => {
+        useGLTF.preload(SCENE_URL)
+        useGLTF.preload(BS_MODEL_URL)
+        useGLTF.preload(JAMMER_MODEL_URL)
+    }, [SCENE_URL, BS_MODEL_URL, JAMMER_MODEL_URL])
+
     // 加載主場景模型，使用 useMemo 避免重複加載
     const { scene: mainScene } = useGLTF(SCENE_URL) as any
     const { controls } = useThree()
@@ -131,7 +140,7 @@ const MainScene: React.FC<MainSceneProps> = ({
             }
         })
         return root
-    }, [mainScene])
+    }, [mainScene, SATELLITE_TEXTURE_URL])
 
     const deviceMeshes = useMemo(() => {
         return devices.map((device: any) => {
@@ -215,6 +224,8 @@ const MainScene: React.FC<MainSceneProps> = ({
         manualControl,
         uavAnimation,
         selectedReceiverIds,
+        BS_MODEL_URL,
+        JAMMER_MODEL_URL,
     ])
 
     return (

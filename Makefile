@@ -20,5 +20,8 @@ clean:
 build:
 	docker compose build
 
+no-cache:
+	docker compose build --no-cache
+
 re-b:
 	docker compose restart backend

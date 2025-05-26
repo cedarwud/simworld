@@ -211,6 +211,7 @@ function App({ activeView }: AppProps) {
                     <SceneViewer
                         devices={tempDevices}
                         refreshDeviceData={refreshDeviceData}
+                        sceneName={currentScene}
                     />
                 )
             case '3DRT':
@@ -224,6 +225,7 @@ function App({ activeView }: AppProps) {
                         uavAnimation={uavAnimation}
                         selectedReceiverIds={selectedReceiverIds}
                         satellites={skyfieldSatellites}
+                        sceneName={currentScene}
                     />
                 )
             default:
@@ -231,6 +233,7 @@ function App({ activeView }: AppProps) {
                     <SceneViewer
                         devices={tempDevices}
                         refreshDeviceData={refreshDeviceData}
+                        sceneName={currentScene}
                     />
                 )
         }
@@ -245,6 +248,7 @@ function App({ activeView }: AppProps) {
         selectedReceiverIds,
         refreshDeviceData,
         skyfieldSatellites,
+        currentScene,
     ])
 
     if (loading) {

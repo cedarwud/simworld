@@ -1,7 +1,7 @@
 export const COORDINATE_TRANSFORM = {
-    offsetX: 579,
-    offsetY: 511,
-    scale: 1.2,
+    offsetX: 865,
+    offsetY: 640,
+    scale: 1.0,
 }
 
 export function imageToSceneCoords(

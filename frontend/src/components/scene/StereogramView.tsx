@@ -42,6 +42,7 @@ interface SceneViewProps {
     uavAnimation: boolean
     selectedReceiverIds?: number[]
     satellites?: VisibleSatelliteInfo[]
+    sceneName: string // 新增場景名稱參數
 }
 
 export default function SceneView({
@@ -53,6 +54,7 @@ export default function SceneView({
     uavAnimation,
     selectedReceiverIds = [],
     satellites = [],
+    sceneName,
 }: SceneViewProps) {
     return (
         <div
@@ -109,6 +111,7 @@ export default function SceneView({
                         uavAnimation={uavAnimation}
                         selectedReceiverIds={selectedReceiverIds}
                         satellites={satellites}
+                        sceneName={sceneName}
                     />
                     <ContactShadows
                         position={[0, 0.1, 0]}

@@ -13,18 +13,22 @@ import {
 } from '../../hooks/useDevicePopoverManager'
 import { useFloorMouseInteractions } from '../../hooks/useFloorMouseInteractions'
 import {
-    COORDINATE_TRANSFORM as UTIL_COORDINATE_TRANSFORM,
     imageToSceneCoords as utilImageToSceneCoords,
     sceneToImageCoords as utilSceneToImageCoords,
 } from '../../utils/coordinate'
+import { getSceneCoordinateTransform } from '../../utils/sceneUtils'
 
 interface SceneViewerProps {
     devices: Device[]
     refreshDeviceData: () => void
+    sceneName: string // 新增場景名稱參數
 }
 
 const SceneViewer: React.FC<SceneViewerProps> = React.memo(
-    ({ devices: propDevices, refreshDeviceData }) => {
+    ({ devices: propDevices, refreshDeviceData, sceneName }) => {
+        // 獲取場景特定的座標轉換參數
+        const sceneCoordinateTransform = getSceneCoordinateTransform(sceneName)
+
         const {
             imageUrl,
             imageRefToAttach,
@@ -34,7 +38,7 @@ const SceneViewer: React.FC<SceneViewerProps> = React.memo(
             retryLoad,
             handleImageLoad,
             handleImageError,
-        } = useSceneImageManager()
+        } = useSceneImageManager(sceneName)
 
         const imageToSceneCoords = useCallback(
             (
@@ -52,10 +56,10 @@ const SceneViewer: React.FC<SceneViewerProps> = React.memo(
                     renderedHeight,
                     naturalWidth,
                     naturalHeight,
-                    UTIL_COORDINATE_TRANSFORM
+                    sceneCoordinateTransform
                 )
             },
-            []
+            [sceneCoordinateTransform]
         )
 
         const sceneToImageCoords = useCallback(
@@ -69,10 +73,10 @@ const SceneViewer: React.FC<SceneViewerProps> = React.memo(
                     sceneY,
                     imageRefToAttach.current,
                     imageNaturalSize,
-                    UTIL_COORDINATE_TRANSFORM
+                    sceneCoordinateTransform
                 )
             },
-            [imageRefToAttach, imageNaturalSize]
+            [imageRefToAttach, imageNaturalSize, sceneCoordinateTransform]
         )
 
         const convertBackendToNewDevice = useCallback(
